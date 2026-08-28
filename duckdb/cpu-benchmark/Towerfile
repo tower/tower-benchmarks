@@ -1,0 +1,19 @@
+[app]
+name = "cpu-benchmark"
+description = "Measures whether a Tower run received the CPU its pod was promised"
+script = "./main.py"
+
+[[parameters]]
+name = "WORK_UNITS"
+description = "Fixed units of work to complete. Each unit is a deterministic DuckDB aggregation."
+default = "600"
+
+[[parameters]]
+name = "ROWS"
+description = "Rows per work unit"
+default = "4000000"
+
+[[parameters]]
+name = "SAMPLE_MS"
+description = "Interval between CPU samples during the run"
+default = "2000"

@@ -1,0 +1,19 @@
+[app]
+name = "io-benchmark"
+description = "Measures whether disk I/O (DuckDB spill) limits a Tower run"
+script = "./main.py"
+
+[[parameters]]
+name = "ROWS"
+description = "Rows in the test dataset. Larger forces more spill."
+default = "60000000"
+
+[[parameters]]
+name = "SPILL_MEMORY_LIMIT"
+description = "DuckDB memory_limit for the constrained phase, e.g. 600MB"
+default = "400MB"
+
+[[parameters]]
+name = "TEMP_DIR"
+description = "Where DuckDB spills. Defaults to the pod's ephemeral volume."
+default = "/app/spill"
