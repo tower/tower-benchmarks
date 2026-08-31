@@ -17,3 +17,8 @@ default = "4000000"
 name = "SAMPLE_MS"
 description = "Interval between CPU samples during the run"
 default = "2000"
+
+[[parameters]]
+name = "CYCLES"
+description = "Repeat the benchmark this many times, printing one line per cycle. 1 = single detailed report, 0 = run until stopped."
+default = "1"

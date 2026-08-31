@@ -96,10 +96,38 @@ def run_work(units: int, rows: int, sampler_ms: float):
     return wall, cgroup.delta(before, after), sampler, threads
 
 
+def soak(units: int, rows: int, sample_ms: float, cycles: int, quota) -> int:
+    """Run the benchmark repeatedly, reporting each cycle as it completes.
+
+    A long soak reports incrementally so partial logs are useful if the run is
+    interrupted, and so drift over time is visible rather than averaged away.
+    """
+    import datetime
+
+    print(f"  soak mode: {cycles if cycles else 'unbounded'} cycles of {units} units")
+    print()
+    print(f"  {'cycle':>5} {'utc':>9} {'wall_s':>8} {'cpu_s':>8} {'cores':>7} {'thr%':>7} {'periods':>8}")
+
+    n = 0
+    while cycles == 0 or n < cycles:
+        n += 1
+        wall, d, sampler, _ = run_work(units, rows, sample_ms)
+        cpu_secs = d.cpu_used * d.elapsed
+        stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M:%S")
+        print(
+            f"  {n:>5} {stamp:>9} {wall:>8.1f} {cpu_secs:>8.1f} "
+            f"{d.cpu_used:>7.2f} {d.throttle_ratio * 100:>6.1f}% {d.periods:>8}",
+            flush=True,
+        )
+    return 0
+
+
 def main() -> int:
     units = int(_param("WORK_UNITS", "600"))
     rows = int(_param("ROWS", "4000000"))
     sample_ms = float(_param("SAMPLE_MS", "2000"))
+
+    cycles = int(_param("CYCLES", "1"))
 
     quota = cgroup.quota_cores()
     visible = cgroup.visible_cpus()
@@ -118,6 +146,9 @@ def main() -> int:
         print("  container?). Throttling cannot occur, so this benchmark has")
         print("  nothing to measure. Run it on Tower.")
         return 1
+
+    if cycles != 1:
+        return soak(units, rows, sample_ms, cycles, quota)
 
     print("  running...")
     wall, d, sampler, threads = run_work(units, rows, sample_ms)

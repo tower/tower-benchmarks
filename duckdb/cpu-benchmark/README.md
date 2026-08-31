@@ -30,6 +30,27 @@ tower run -p WORK_UNITS=1200        # longer run
 tower run -p ROWS=8000000           # heavier unit
 ```
 
+### Soak mode
+
+`CYCLES` repeats the benchmark, printing one line per cycle instead of a single
+detailed report. Use it to watch for drift over hours or days — the per-cycle
+output is flushed as it completes, so partial logs stay useful if the run is
+interrupted.
+
+```bash
+tower run -p CYCLES=10       # ten cycles, then exit
+tower run -d -p CYCLES=0     # run until stopped
+```
+
+```
+  cycle       utc   wall_s    cpu_s   cores    thr%  periods
+      1  17:42:30     46.7     91.9    1.97    0.0%      468
+      2  17:43:17     46.6     91.6    1.96    0.0%      466
+```
+
+Watch `cpu_s`: if it holds steady while `wall_s` grows, the extra time is
+waiting rather than computing.
+
 ## Reading the output
 
 ```
