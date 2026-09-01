@@ -82,3 +82,65 @@ throughput depends on what else is running alongside them.
 
 To measure this directly, run `io-benchmark` alone and then several instances
 concurrently, and compare.
+
+---
+
+## 2026-09-01 — concurrency scaling, eu-west-1
+
+First results from `duckdb/contention-benchmark`, measuring how per-run latency
+scales with the number of simultaneous runs, and whether the constraint is CPU
+or disk.
+
+**Environment.** `r6a.2xlarge` nodes (8 vCPU, 7.91 allocatable), pods limited to
+2 CPU / 16 GiB with requests of 500m / 1Gi, node root volume 500 GiB gp3 at the
+125 MB/s baseline. At concurrency 50 the scheduler placed **15 pods per node**
+across 4 nodes — pod density follows the 500m request, so per-node CPU limits
+summed to 30 cores against 7.91 available.
+
+Each run: 40 work units × 4M rows, 4 cycles, first cycle discarded as warm-up.
+
+| Mode | Concurrency | n | wall_s | cpu_s | cores | throttled | written | io_wait |
+|---|---|---|---|---|---|---|---|---|
+| cpu | 10 | 10 | 27.7 | 53.1 | 1.91 | 2.78% | 0 MB | 0.00% |
+| cpu | 50 | 50 | **91.1** | 55.8 | **0.63** | **0.00%** | 0 MB | 0.00% |
+| disk | 10 | 10 | 37.7 | 70.7 | 1.88 | 7.18% | 530 MB | 0.79% |
+| disk | 50 | 50 | **111.5** | 68.7 | **0.62** | 0.02% | 684 MB | 2.06% |
+
+### Latency scales with concurrency, and the cause is CPU share
+
+From 10 to 50 concurrent runs, wall-clock time grew **3.28×** in cpu mode and
+**2.96×** in disk mode. Both modes degraded by essentially the same factor, so
+disk is not what differentiates them: aggregate writes reached ~77 MB/s per node
+against the 125 MB/s baseline, and I/O stall stayed at 2%.
+
+CPU time per run stayed flat (53.1 → 55.8 s, a factor of 1.05). The work cost
+the same; each run simply received less CPU. **Delivered CPU fell from 1.91 to
+0.63 cores** — close to the 8 ÷ 15 ≈ 0.53 that fair-share scheduling implies at
+that pod density.
+
+### Starvation without throttling
+
+The most useful detail for anyone instrumenting this: **throttling went to zero
+as latency tripled.**
+
+CFS throttling registers only when a pod exhausts *its own* quota. Linux
+allocates CPU by weight derived from a pod's **request**, so at 15 pods × 500m
+on 8 cores each pod receives ~0.5 cores — far below its 2-core limit. It is
+starved, but never reaches the ceiling that would throttle it.
+
+A monitoring setup that watches `container_cpu_cfs_throttled_periods_total`
+alone will therefore report a healthy cluster while runs take three times
+longer. The signal that does track the problem is **delivered cores**
+(`container_cpu_usage_seconds_total` against the pod's limit).
+
+### Implications
+
+- Pod density on these nodes is set by the CPU **request** (500m), while
+  behaviour under load is governed by how that request compares to the limit
+  (2 CPU). At a 4:1 ratio, a fully packed node delivers roughly a quarter of
+  each pod's nominal CPU.
+- Raising requests toward limits reduces density and raises the per-pod floor
+  proportionally, at a corresponding increase in node count.
+- Disk was not the binding constraint at this concurrency, but the per-node
+  125 MB/s baseline is shared and would become one at higher spill volumes.
+  gp3 throughput is provisionable independently of volume size.

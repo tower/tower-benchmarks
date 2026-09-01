@@ -1,0 +1,34 @@
+[app]
+name = "contention-driver"
+description = "Fans out N concurrent contention-benchmark runs and waits for them"
+script = "./main.py"
+
+[[parameters]]
+name = "MODE"
+description = "cpu or disk — passed through to every child run"
+default = "cpu"
+
+[[parameters]]
+name = "CONCURRENCY"
+description = "Number of child runs to launch simultaneously"
+default = "10"
+
+[[parameters]]
+name = "CHILD_APP"
+description = "App to fan out to"
+default = "contention-benchmark"
+
+[[parameters]]
+name = "UNITS"
+description = "Work units per cycle, passed to each child"
+default = "40"
+
+[[parameters]]
+name = "CYCLES"
+description = "Cycles per child"
+default = "5"
+
+[[parameters]]
+name = "ROWS"
+description = "Rows per work unit, passed to each child"
+default = "4000000"

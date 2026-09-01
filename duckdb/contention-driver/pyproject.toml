@@ -1,0 +1,15 @@
+[project]
+name = "contention-driver"
+version = "0.1.0"
+description = "Concurrency driver for the contention benchmark"
+requires-python = ">=3.12"
+dependencies = [
+    "tower>=0.3.37",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["main"]

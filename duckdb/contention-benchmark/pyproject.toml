@@ -1,0 +1,15 @@
+[project]
+name = "contention-benchmark"
+version = "0.1.0"
+description = "CPU vs disk contention benchmark for Tower runs"
+requires-python = ">=3.12"
+dependencies = [
+    "duckdb>=1.0.0",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["main", "cgroup", "iostat"]

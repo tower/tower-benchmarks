@@ -1,0 +1,35 @@
+[app]
+name = "contention-benchmark"
+description = "Separates CPU-bound from disk-bound latency under concurrent load"
+
+script = "./main.py"
+
+[[parameters]]
+name = "MODE"
+description = "cpu = in-memory CPU-bound work (no spill). disk = same shape but forced to spill. Run both across a concurrency sweep and compare."
+default = "cpu"
+
+[[parameters]]
+name = "ROWS"
+description = "Rows per work unit"
+default = "4000000"
+
+[[parameters]]
+name = "UNITS"
+description = "Work units per cycle"
+default = "40"
+
+[[parameters]]
+name = "CYCLES"
+description = "Cycles to run. Each prints one line. Keep >1 so startup skew is visible."
+default = "5"
+
+[[parameters]]
+name = "SPILL_MEMORY_LIMIT"
+description = "DuckDB memory_limit in disk mode. Low enough to force spill."
+default = "400MB"
+
+[[parameters]]
+name = "TAG"
+description = "Free-form label echoed in output, e.g. the concurrency level. Makes logs self-describing when many runs are launched together."
+default = ""

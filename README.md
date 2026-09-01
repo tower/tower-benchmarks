@@ -24,6 +24,8 @@ but wall clock grew, the difference is waiting — not computing.
 |---|---|
 | [`duckdb/cpu-benchmark`](duckdb/cpu-benchmark) | Did this pod get the CPU it was promised? |
 | [`duckdb/io-benchmark`](duckdb/io-benchmark) | Does disk keep up when DuckDB spills? |
+| [`duckdb/contention-benchmark`](duckdb/contention-benchmark) | Under concurrency, is the constraint CPU or disk? |
+| [`duckdb/contention-driver`](duckdb/contention-driver) | Launches N of the above at once, for concurrency sweeps |
 
 Reference measurements are in [RESULTS.md](RESULTS.md).
 
